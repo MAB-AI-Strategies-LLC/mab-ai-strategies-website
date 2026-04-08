@@ -29,9 +29,9 @@ export default function Footer() {
       title: "Company",
       links: [
         { label: "About", href: "/about" },
-        { label: "Case Studies", href: "#" },
-        { label: "Blog", href: "#" },
-        { label: "Newsletter", href: "#" },
+        { label: "Case Studies", href: "/contact" },
+        { label: "Blog", href: "/contact" },
+        { label: "Newsletter", href: "/contact" },
         { label: "Contact", href: "/contact" },
       ],
     },
@@ -103,10 +103,10 @@ export default function Footer() {
             &copy; {currentYear} MAB AI Strategies. All rights reserved.
           </p>
           <div className="flex items-center space-x-6 text-sm">
-            <Link href="#" className="text-[#f8f6f1]/50 hover:text-[#d4af37] transition-colors">
+            <Link href="/privacy" className="text-[#f8f6f1]/50 hover:text-[#d4af37] transition-colors">
               Privacy Policy
             </Link>
-            <Link href="#" className="text-[#f8f6f1]/50 hover:text-[#d4af37] transition-colors">
+            <Link href="/terms" className="text-[#f8f6f1]/50 hover:text-[#d4af37] transition-colors">
               Terms of Service
             </Link>
           </div>

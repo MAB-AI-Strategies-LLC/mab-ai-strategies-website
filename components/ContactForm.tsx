@@ -4,52 +4,121 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Send, CheckCircle, Loader2, Mic } from "lucide-react";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface FormData {
+  name: string;
+  email: string;
+  company: string;
+  position: string;
+  phone: string;
+  coreTask: string;
+  endGoal: string;
+  alternateReason: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  company?: string;
+  position?: string;
+  coreTask?: string;
+  endGoal?: string;
+}
+
+function validateForm(data: FormData): FormErrors {
+  const errors: FormErrors = {};
+  if (!data.name.trim()) errors.name = "Full name is required.";
+  if (!data.email.trim()) {
+    errors.email = "Email address is required.";
+  } else if (!EMAIL_RE.test(data.email)) {
+    errors.email = "Please enter a valid email address.";
+  }
+  if (!data.company.trim()) errors.company = "Company name is required.";
+  if (!data.position.trim()) errors.position = "Position/title is required.";
+  if (!data.coreTask.trim()) errors.coreTask = "Please describe your core task.";
+  if (!data.endGoal) errors.endGoal = "Please select your primary goal.";
+  return errors;
+}
+
+const EMPTY_FORM: FormData = {
+  name: "",
+  email: "",
+  company: "",
+  position: "",
+  phone: "",
+  coreTask: "",
+  endGoal: "",
+  alternateReason: "",
+};
+
 export default function ContactForm() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    company: "",
-    position: "",
-    phone: "",
-    coreTask: "",
-    endGoal: "",
-    alternateReason: "",
-  });
+  const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
+  const [honeypot, setHoneypot] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const updated = { ...formData, [name]: value };
+    setFormData(updated);
+    if (touched[name as keyof FormData]) {
+      const newErrors = validateForm(updated);
+      setErrors(newErrors);
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    setErrors(validateForm(formData));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const allTouched = Object.keys(formData).reduce(
+      (acc, key) => ({ ...acc, [key]: true }),
+      {} as Record<keyof FormData, boolean>
+    );
+    setTouched(allTouched);
+
+    const validationErrors = validateForm(formData);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
     setIsSubmitting(true);
-    setError("");
+    setSubmitError("");
 
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          _hp: honeypot,
           timestamp: new Date().toISOString(),
           source: "MAB AI Website Contact Form v2",
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to submit form");
+        throw new Error(data.message ?? "Failed to submit form.");
       }
 
       setIsSubmitted(true);
     } catch (err) {
-      setError("Something went wrong. Please try again or email us directly.");
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again or email us directly."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -75,11 +144,32 @@ export default function ContactForm() {
     );
   }
 
+  const fieldClass = (hasError: boolean) =>
+    `w-full px-4 py-3 bg-[#0a0e1f] border rounded-lg text-[#f8f6f1] placeholder-[#f8f6f1]/30 focus:outline-none transition-colors ${
+      hasError
+        ? "border-red-500/70 focus:border-red-500"
+        : "border-[#d4af37]/30 focus:border-[#d4af37]"
+    }`;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+      {/* Honeypot — hidden from humans, filled by bots */}
+      <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", tabIndex: -1 }}>
+        <label htmlFor="_hp">Leave this field empty</label>
+        <input
+          type="text"
+          id="_hp"
+          name="_hp"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          autoComplete="off"
+          tabIndex={-1}
+        />
+      </div>
+
+      {submitError && (
         <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400">
-          {error}
+          {submitError}
         </div>
       )}
 
@@ -87,33 +177,41 @@ export default function ContactForm() {
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="name" className="block text-[#f8f6f1] mb-2">
-            Full Name *
+            Full Name <span className="text-[#d4af37]">*</span>
           </label>
           <input
             type="text"
             id="name"
             name="name"
-            required
             value={formData.name}
             onChange={handleChange}
-            className="w-full px-4 py-3 bg-[#0a0e1f] border border-[#d4af37]/30 rounded-lg text-[#f8f6f1] placeholder-[#f8f6f1]/30 focus:outline-none focus:border-[#d4af37] transition-colors"
+            onBlur={handleBlur}
+            className={fieldClass(!!errors.name && !!touched.name)}
             placeholder="John Doe"
+            maxLength={120}
           />
+          {errors.name && touched.name && (
+            <p className="mt-1 text-sm text-red-400">{errors.name}</p>
+          )}
         </div>
         <div>
           <label htmlFor="company" className="block text-[#f8f6f1] mb-2">
-            Company Name *
+            Company Name <span className="text-[#d4af37]">*</span>
           </label>
           <input
             type="text"
             id="company"
             name="company"
-            required
             value={formData.company}
             onChange={handleChange}
-            className="w-full px-4 py-3 bg-[#0a0e1f] border border-[#d4af37]/30 rounded-lg text-[#f8f6f1] placeholder-[#f8f6f1]/30 focus:outline-none focus:border-[#d4af37] transition-colors"
+            onBlur={handleBlur}
+            className={fieldClass(!!errors.company && !!touched.company)}
             placeholder="Acme Inc."
+            maxLength={200}
           />
+          {errors.company && touched.company && (
+            <p className="mt-1 text-sm text-red-400">{errors.company}</p>
+          )}
         </div>
       </div>
 
@@ -121,22 +219,26 @@ export default function ContactForm() {
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="position" className="block text-[#f8f6f1] mb-2">
-            Position/Title *
+            Position/Title <span className="text-[#d4af37]">*</span>
           </label>
           <input
             type="text"
             id="position"
             name="position"
-            required
             value={formData.position}
             onChange={handleChange}
-            className="w-full px-4 py-3 bg-[#0a0e1f] border border-[#d4af37]/30 rounded-lg text-[#f8f6f1] placeholder-[#f8f6f1]/30 focus:outline-none focus:border-[#d4af37] transition-colors"
+            onBlur={handleBlur}
+            className={fieldClass(!!errors.position && !!touched.position)}
             placeholder="Director of Operations"
+            maxLength={200}
           />
+          {errors.position && touched.position && (
+            <p className="mt-1 text-sm text-red-400">{errors.position}</p>
+          )}
         </div>
         <div>
           <label htmlFor="phone" className="block text-[#f8f6f1] mb-2">
-            Phone Number
+            Phone Number <span className="text-[#f8f6f1]/40 text-sm">(optional)</span>
           </label>
           <input
             type="tel"
@@ -144,8 +246,9 @@ export default function ContactForm() {
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full px-4 py-3 bg-[#0a0e1f] border border-[#d4af37]/30 rounded-lg text-[#f8f6f1] placeholder-[#f8f6f1]/30 focus:outline-none focus:border-[#d4af37] transition-colors"
+            className={fieldClass(false)}
             placeholder="+1 (555) 123-4567"
+            maxLength={30}
           />
         </div>
       </div>
@@ -153,49 +256,59 @@ export default function ContactForm() {
       {/* Email */}
       <div>
         <label htmlFor="email" className="block text-[#f8f6f1] mb-2">
-          Email Address *
+          Email Address <span className="text-[#d4af37]">*</span>
         </label>
         <input
           type="email"
           id="email"
           name="email"
-          required
           value={formData.email}
           onChange={handleChange}
-          className="w-full px-4 py-3 bg-[#0a0e1f] border border-[#d4af37]/30 rounded-lg text-[#f8f6f1] placeholder-[#f8f6f1]/30 focus:outline-none focus:border-[#d4af37] transition-colors"
+          onBlur={handleBlur}
+          className={fieldClass(!!errors.email && !!touched.email)}
           placeholder="john@company.com"
+          maxLength={254}
         />
+        {errors.email && touched.email && (
+          <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+        )}
       </div>
 
       {/* Core Task */}
       <div>
         <label htmlFor="coreTask" className="block text-[#f8f6f1] mb-2">
-          If you had to funnel your job responsibility down to one core task, what is it? *
+          If you had to funnel your job responsibility down to one core task, what is it?{" "}
+          <span className="text-[#d4af37]">*</span>
         </label>
         <input
           type="text"
           id="coreTask"
           name="coreTask"
-          required
           value={formData.coreTask}
           onChange={handleChange}
-          className="w-full px-4 py-3 bg-[#0a0e1f] border border-[#d4af37]/30 rounded-lg text-[#f8f6f1] placeholder-[#f8f6f1]/30 focus:outline-none focus:border-[#d4af37] transition-colors"
+          onBlur={handleBlur}
+          className={fieldClass(!!errors.coreTask && !!touched.coreTask)}
           placeholder="e.g., Managing vendor relationships, Strategic planning, Operations oversight..."
+          maxLength={500}
         />
+        {errors.coreTask && touched.coreTask && (
+          <p className="mt-1 text-sm text-red-400">{errors.coreTask}</p>
+        )}
       </div>
 
       {/* End Goal */}
       <div>
         <label htmlFor="endGoal" className="block text-[#f8f6f1] mb-2">
-          What is the &quot;end&quot; goal with AI in your company? *
+          What is the &quot;end&quot; goal with AI in your company?{" "}
+          <span className="text-[#d4af37]">*</span>
         </label>
         <select
           id="endGoal"
           name="endGoal"
-          required
           value={formData.endGoal}
           onChange={handleChange}
-          className="w-full px-4 py-3 bg-[#0a0e1f] border border-[#d4af37]/30 rounded-lg text-[#f8f6f1] focus:outline-none focus:border-[#d4af37] transition-colors"
+          onBlur={handleBlur}
+          className={fieldClass(!!errors.endGoal && !!touched.endGoal)}
         >
           <option value="">Select your primary goal...</option>
           <option value="free_time">Free up time for strategic work</option>
@@ -206,12 +319,16 @@ export default function ContactForm() {
           <option value="ipo">Going public (IPO)</option>
           <option value="something_bigger">Something bigger</option>
         </select>
+        {errors.endGoal && touched.endGoal && (
+          <p className="mt-1 text-sm text-red-400">{errors.endGoal}</p>
+        )}
       </div>
 
       {/* Alternate Reason */}
       <div>
         <label htmlFor="alternateReason" className="block text-[#f8f6f1] mb-2">
-          Alternate reason for reaching out? (Optional)
+          Anything else you&apos;d like us to know?{" "}
+          <span className="text-[#f8f6f1]/40 text-sm">(optional)</span>
         </label>
         <textarea
           id="alternateReason"
@@ -219,8 +336,9 @@ export default function ContactForm() {
           rows={3}
           value={formData.alternateReason}
           onChange={handleChange}
-          className="w-full px-4 py-3 bg-[#0a0e1f] border border-[#d4af37]/30 rounded-lg text-[#f8f6f1] placeholder-[#f8f6f1]/30 focus:outline-none focus:border-[#d4af37] transition-colors resize-none"
+          className={fieldClass(false)}
           placeholder="Tell us more about your specific needs or situation..."
+          maxLength={2000}
         />
       </div>
 
