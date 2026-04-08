@@ -73,7 +73,6 @@ export default function ServicesPage() {
             viewport={{ once: true }}
             className="relative bg-[#12183a]/50 backdrop-blur-sm border border-[#d4af37]/30 rounded-2xl p-8 md:p-12 overflow-hidden"
           >
-            {/* Background decoration */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#d4af37] rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#87CEEB] rounded-full blur-3xl" />
@@ -81,30 +80,16 @@ export default function ServicesPage() {
 
             <div className="relative z-10 text-center">
               <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#d4af37] via-[#87CEEB] to-[#1E90FF] bg-clip-text text-transparent mb-4">
-                Join the Waitlist
+                Stay Ahead of the Curve
               </h2>
-              
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="inline-block mb-6"
-              >
-                <div className="relative px-6 py-2">
-                  <div className="absolute inset-0 border border-[#d4af37]/50 rounded-lg animate-pulse" />
-                  <p className="text-[#f8f6f1]/90 text-lg">
-                    Early bird subscribers get a chance at a <span className="text-[#d4af37] font-bold">FREE</span> tech audit consultation
-                  </p>
-                </div>
-              </motion.div>
 
-              <p className="text-[#f8f6f1]/70 mb-2">
-                Plus an automation &quot;kickstarter pack&quot; worth up to <span className="text-[#d4af37] font-bold">$15K!</span>
+              <p className="text-[#f8f6f1]/70 mb-2 max-w-xl mx-auto">
+                Get exclusive AI automation insights, case studies, and strategy frameworks
+                delivered directly to your inbox.
               </p>
-              
+
               <p className="text-[#f8f6f1]/50 text-sm mb-8">
-                Winner chosen March 31 • Announced in first edition (first Monday in April)
+                No spam. Unsubscribe at any time.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto">
@@ -114,13 +99,9 @@ export default function ServicesPage() {
                   className="flex-1 px-6 py-4 bg-[#0a0e1f] border border-[#d4af37]/30 rounded-lg text-[#f8f6f1] placeholder-[#f8f6f1]/30 focus:outline-none focus:border-[#d4af37] transition-colors w-full"
                 />
                 <button className="px-8 py-4 bg-[#d4af37] text-[#0a0e1f] font-bold rounded-lg hover:bg-[#f4d03f] transition-all w-full sm:w-auto whitespace-nowrap">
-                  Join Waitlist
+                  Subscribe
                 </button>
               </div>
-
-              <p className="text-[#f8f6f1]/40 text-xs mt-4">
-                *Email addresses stored separately for newsletter waitlist
-              </p>
             </div>
           </motion.div>
         </div>
