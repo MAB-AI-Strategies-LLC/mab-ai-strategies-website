@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 interface ContactPayload {
   name: string;
   email: string;
-  company: string;
-  position: string;
+  company?: string;
+  position?: string;
   phone?: string;
   coreTask: string;
   endGoal: string;
@@ -15,6 +15,12 @@ interface ContactPayload {
   source: string;
   // honeypot — must be empty
   _hp?: string;
+  // ROI calculator extras
+  hoursPerWeek?: number;
+  hourlyRate?: number;
+  numEmployees?: number;
+  efficiencyGain?: number;
+  annualSavings?: number;
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -35,8 +41,8 @@ function validate(body: Partial<ContactPayload>): string | null {
   if (!body.name?.trim() || body.name.length > 120) return "Valid name is required.";
   if (!body.email?.trim() || !EMAIL_RE.test(body.email) || body.email.length > 254)
     return "Valid email address is required.";
-  if (!body.company?.trim() || body.company.length > 200) return "Company name is required.";
-  if (!body.position?.trim() || body.position.length > 200) return "Position/title is required.";
+  if (body.company && body.company.length > 200) return "Company name is too long.";
+  if (body.position && body.position.length > 200) return "Position/title is too long.";
   if (!body.coreTask?.trim() || body.coreTask.length > 500) return "Core task description is required.";
   if (!body.endGoal || !VALID_END_GOALS.has(body.endGoal)) return "Please select a valid end goal.";
   if (body.phone && body.phone.length > 30) return "Phone number is too long.";
@@ -65,6 +71,39 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
+// ─── Normalise payload → sheet column names ───────────────────────────────────
+// Columns: Timestamp | Source | Full Name | Email | Phone | Company |
+//   Position/Title | Industry | Business Type | Goal | Core Task | Notes |
+//   Website Type | Design Style | Features | Timeline | Budget ($) |
+//   ROI Annual Savings ($) | Hours/Week | Hourly Rate ($) | Employees | Status
+
+function toSheetRow(p: ContactPayload) {
+  return {
+    Timestamp:               p.timestamp,
+    Source:                  p.source,
+    "Full Name":             p.name,
+    Email:                   p.email,
+    Phone:                   p.phone ?? "",
+    Company:                 p.company ?? "",
+    "Position/Title":        p.position ?? "",
+    Industry:                "",          // populated by questionnaire webhook
+    "Business Type":         "",          // populated by questionnaire webhook
+    Goal:                    p.endGoal,
+    "Core Task":             p.coreTask,
+    Notes:                   p.alternateReason ?? "",
+    "Website Type":          "",
+    "Design Style":          "",
+    Features:                "",
+    Timeline:                "",
+    "Budget ($)":            "",
+    "ROI Annual Savings ($)": p.annualSavings ?? "",
+    "Hours/Week":            p.hoursPerWeek ?? "",
+    "Hourly Rate ($)":       p.hourlyRate ?? "",
+    Employees:               p.numEmployees ?? "",
+    Status:                  "New",
+  };
+}
+
 // ─── Webhook delivery ─────────────────────────────────────────────────────────
 
 async function deliverWebhook(payload: ContactPayload): Promise<void> {
@@ -82,7 +121,7 @@ async function deliverWebhook(payload: ContactPayload): Promise<void> {
         "X-Webhook-Secret": process.env.CONTACT_WEBHOOK_SECRET ?? "",
         "X-Source": "mab-ai-website",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(toSheetRow(payload)),
       signal: controller.signal,
     });
 
@@ -137,14 +176,19 @@ export async function POST(request: NextRequest) {
   const payload: ContactPayload = {
     name: body.name!.trim(),
     email: body.email!.trim().toLowerCase(),
-    company: body.company!.trim(),
-    position: body.position!.trim(),
+    company: body.company?.trim() ?? "",
+    position: body.position?.trim() ?? "",
     phone: body.phone?.trim() ?? "",
     coreTask: body.coreTask!.trim(),
     endGoal: body.endGoal!,
     alternateReason: body.alternateReason?.trim() ?? "",
     timestamp: new Date().toISOString(),
-    source: "MAB AI Website Contact Form v2",
+    source: body.source?.trim() || "MAB AI Website Contact Form v2",
+    ...(body.hoursPerWeek !== undefined && { hoursPerWeek: body.hoursPerWeek }),
+    ...(body.hourlyRate !== undefined && { hourlyRate: body.hourlyRate }),
+    ...(body.numEmployees !== undefined && { numEmployees: body.numEmployees }),
+    ...(body.efficiencyGain !== undefined && { efficiencyGain: body.efficiencyGain }),
+    ...(body.annualSavings !== undefined && { annualSavings: body.annualSavings }),
   };
 
   // Deliver to webhook (non-blocking failure — don't break UX if webhook is down)

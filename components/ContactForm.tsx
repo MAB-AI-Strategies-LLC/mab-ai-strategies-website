@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Send, CheckCircle, Loader2, Mic } from "lucide-react";
 
@@ -53,7 +54,23 @@ const EMPTY_FORM: FormData = {
 };
 
 export default function ContactForm() {
-  const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
+  const searchParams = useSearchParams();
+  const [formData, setFormData] = useState<FormData>(() => {
+    // Pre-populate from chat widget URL params on first render
+    return EMPTY_FORM;
+  });
+
+  useEffect(() => {
+    const coreTask = searchParams.get("coreTask") ?? "";
+    const endGoal = searchParams.get("endGoal") ?? "";
+    if (coreTask || endGoal) {
+      setFormData((prev) => ({
+        ...prev,
+        ...(coreTask ? { coreTask } : {}),
+        ...(endGoal ? { endGoal } : {}),
+      }));
+    }
+  }, [searchParams]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
   const [honeypot, setHoneypot] = useState("");

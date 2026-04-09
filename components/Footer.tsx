@@ -20,7 +20,7 @@ export default function Footer() {
       links: [
         { label: "AI Readiness Audits", href: "/services" },
         { label: "Automation Library", href: "/services" },
-        { label: "Custom Websites", href: "/services" },
+        { label: "Custom Websites", href: "/questionnaire/" },
         { label: "Custom Agents", href: "/services" },
         { label: "Speaking", href: "/services" },
       ],
