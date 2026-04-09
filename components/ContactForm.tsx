@@ -171,7 +171,7 @@ export default function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       {/* Honeypot — hidden from humans, filled by bots */}
-      <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", tabIndex: -1 }}>
+      <div aria-hidden="true" style={{ position: "absolute", left: "-9999px" }} tabIndex={-1}>
         <label htmlFor="_hp">Leave this field empty</label>
         <input
           type="text"
