@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import IntroVideo from "@/components/IntroVideo";
 import Hero from "@/components/Hero";
+import SocialProofTicker from "@/components/SocialProofTicker";
 import GeometricCard from "@/components/GeometricCard";
 import GarageDoorCard from "@/components/GarageDoorCard";
 import TechStackSpheres from "@/components/TechStackSpheres";
@@ -99,6 +100,9 @@ export default function LandingPage() {
 
         {/* Hero Section */}
         <Hero />
+
+        {/* Social Proof Ticker */}
+        <SocialProofTicker />
 
         {/* Stats Section with Geometric Cards */}
         <section className="py-24 relative z-10">

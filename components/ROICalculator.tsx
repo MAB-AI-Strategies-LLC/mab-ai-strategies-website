@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Calculator, DollarSign, Clock, Users, TrendingUp, ExternalLink, Info } from "lucide-react";
+import { Calculator, DollarSign, Clock, Users, TrendingUp, ExternalLink, Info, Mail } from "lucide-react";
+import ROIEmailModal from "./ROIEmailModal";
 
 interface ROICalculatorProps {
   variant?: "landing" | "services";
@@ -21,6 +22,7 @@ export default function ROICalculator({ variant = "services" }: ROICalculatorPro
   const [numEmployees, setNumEmployees] = useState(5);
   const [efficiencyGain, setEfficiencyGain] = useState(40);
   const [showSources, setShowSources] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
 
   // Calculate ROI
   const weeklySavings = hoursPerWeek * hourlyRate * (efficiencyGain / 100);
@@ -43,6 +45,18 @@ export default function ROICalculator({ variant = "services" }: ROICalculatorPro
     { label: "Employees", value: numEmployees, unit: "", min: 1, max: 100, setter: setNumEmployees, icon: Users },
     { label: "Efficiency gain", value: efficiencyGain, unit: "%", min: 10, max: 80, setter: setEfficiencyGain, icon: TrendingUp },
   ];
+
+  const roiData = {
+    hoursPerWeek,
+    hourlyRate,
+    numEmployees,
+    efficiencyGain,
+    weeklySavings,
+    monthlySavings,
+    yearlySavings,
+    teamYearlySavings,
+    roiPercentage,
+  };
 
   return (
     <div className="relative">
@@ -247,10 +261,27 @@ export default function ROICalculator({ variant = "services" }: ROICalculatorPro
                   </motion.div>
                 )}
               </div>
+
+              {/* Email My Report CTA */}
+              <div className="mt-4">
+                <button
+                  onClick={() => setEmailModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#d4af37] text-[#0a0e1f] font-semibold rounded-lg hover:bg-[#f4d03f] transition-all duration-300"
+                >
+                  <Mail size={16} />
+                  Email My Report
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <ROIEmailModal
+        open={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+        roiData={roiData}
+      />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AIChatWidget from "@/components/AIChatWidget";
+import ExitIntentModal from "@/components/ExitIntentModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -107,6 +109,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0e1f] text-[#f8f6f1]`}
       >
         {children}
+        <AIChatWidget />
+        <ExitIntentModal />
       </body>
     </html>
   );

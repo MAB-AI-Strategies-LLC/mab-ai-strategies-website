@@ -53,7 +53,7 @@ const services = [
     ],
     cta: {
       text: "Start Website Questionnaire",
-      link: "/contact",
+      link: "/questionnaire/",
     },
     color: "#a78bfa",
   },
