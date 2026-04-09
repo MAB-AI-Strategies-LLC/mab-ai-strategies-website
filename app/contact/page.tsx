@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ContactForm from "@/components/ContactForm";
@@ -213,7 +213,7 @@ export default function ContactPage() {
               {activeTab === "contact" ? (
                 <div className="bg-[#12183a]/50 backdrop-blur-sm border border-[#d4af37]/20 rounded-2xl p-8">
                   <h2 className="text-2xl font-bold text-white mb-6">Send us a Message</h2>
-                  <ContactForm />
+                  <Suspense fallback={null}><ContactForm /></Suspense>
                 </div>
               ) : (
                 <div className="bg-[#12183a]/50 backdrop-blur-sm border border-[#d4af37]/20 rounded-2xl p-8 h-full flex items-center justify-center">
